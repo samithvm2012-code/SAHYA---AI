@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAHYA AI - SAGE Architecture Grid Engine</title>
+    <style>
+        /* Base Reset & Theme */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #030803;
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Centered Cinematic Startup Screen */
+        #startup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #020502;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .startup-content {
+            text-align: center;
+        }
+
+        .startup-title {
+            font-size: 3.5rem;
+            color: #00ff66;
+            text-shadow: 0 0 25px rgba(0, 255, 102, 0.7);
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+        }
+
+        .startup-subtitle {
+            font-size: 1rem;
+            color: #88ffaa;
+            margin-bottom: 30px;
+            height: 25px;
+            letter-spacing: 1px;
+        }
+
+        .neon-bar-container {
+            width: 340px;
+            height: 6px;
+            background: #0d1a0d;
+            border-radius: 4px;
+            border: 1px solid #00ff66;
+            overflow: hidden;
+            margin: 0 auto 10px auto;
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+        }
+
+        .neon-bar {
+            width: 0%;
+            height: 100%;
+            background: #00ff66;
+            box-shadow: 0 0 15px #00ff66;
+            transition: width 0.08s linear;
+        }
+
+        .boot-counter {
+            color: #00ff66;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Main Dashboard Layout */
+        .sidebar {
+            width: 260px;
+            background: #050f05;
+            border-right: 1px solid #0a260a;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: space-between;
+            z-index: 2;
+        }
+
+        .sidebar-section h3 {
+            font-size: 0.75rem;
+            color: #33aa55;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .nav-btn, .sidebar-item {
+            background: transparent;
+            border: 1px solid #0a260a;
+            color: #00ff66;
+            padding: 10px 14px;
+            text-align: left;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover, .sidebar-item:hover, .nav-btn.active {
+            background: rgba(0, 255, 102, 0.1);
+            border-color: #00ff66;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #030803;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Realistic Background Holographic Logo Watermark */
+        .main-container::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 550px;
+            height: 550px;
+            background: url("{{ url_for('static', filename='logo.png') }}") no-repeat center center;
+            background-size: contain;
+            opacity: 0.08;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 102, 0.3));
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .header, .chat-stream, .input-footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #0a260a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(3, 8, 3, 0.85);
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            color: #00ff66;
+        }
+
+        .status-badge {
+            background: rgba(0, 255, 102, 0.1);
+            border: 1px solid #00ff66;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #00ff66;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #00ff66;
+        }
+
+        /* Chat Display Area */
+        .chat-stream {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message-box {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 8px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            border: 1px solid #0a260a;
+            background: rgba(5, 15, 5, 0.9);
+        }
+
+        .message-box.user {
+            align-self: flex-end;
+            border-color: #00ff66;
+            color: #00ff66;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.15);
+        }
+
+        .message-box.ai {
+            align-self: flex-start;
+            border-color: #0a3311;
+            color: #88ffaa;
+            background: rgba(4, 12, 4, 0.9);
+        }
+
+        /* Input Controls Footer */
+        .input-footer {
+            padding: 25px 30px;
+            border-top: 1px solid #0a260a;
+            background: rgba(4, 10, 4, 0.95);
+            display: flex;
+            gap: 15px;
+        }
+
+        .query-input {
+            flex: 1;
+            background: #030803;
+            border: 1px solid #0a3311;
+            border-radius: 8px;
+            padding: 14px 18px;
+            color: #00ff66;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .query-input:focus {
+            border-color: #00ff66;
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.25);
+        }
+
+        .send-btn {
+            background: #00ff66;
+            color: #030803;
+            border: none;
+            border-radius: 8px;
+            padding: 0 28px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+        }
+
+        .send-btn:hover {
+            background: #33ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Centered Cinematic Startup Screen -->
+    <div id="startup-screen">
+        <div class="startup-content">
+            <h1 class="startup-title">SAHYA AI</h1>
+            <p id="boot-status" class="startup-subtitle">Samith Architecture Hyper Yield Automation AI</p>
+            <div class="neon-bar-container">
+                <div id="boot-progress" class="neon-bar"></div>
+            </div>
+            <span id="boot-percent" class="boot-counter">0%</span>
+        </div>
+    </div>
+
+    <!-- Sidebar Control Panel -->
+    <div class="sidebar">
+        <div>
+            <button class="nav-btn" style="border-color: #00ff66; margin-bottom: 25px;">+ New Quantum Session</button>
+            
+            <div class="sidebar-section">
+                <h3>Saved Matrix</h3>
+                <button class="sidebar-item">SAHYA Core Matrix v4.5</button>
+            </div>
+
+            <div class="sidebar-section" style="margin-top: 25px;">
+                <h3>Neural Mode</h3>
+                <button class="nav-btn active" data-mode="universal">Universal Chat</button>
+                <button class="nav-btn" data-mode="impress">SAHYA Impress Mode</button>
+                <button class="nav-btn" data-mode="image">Image Generation</button>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>System Status</h3>
+            <p style="font-size: 0.8rem; color: #44aa66;">user@domain.com</p>
+            <span style="font-size: 0.75rem; color: #ff4444; cursor: pointer; display: inline-block; margin-top: 5px;">Logout</span>
+        </div>
+    </div>
+
+    <!-- Main Workspace with Background Holographic Logo Watermark -->
+    <div class="main-container">
+        <div class="header">
+            <h1>SAGE Architecture Grid Engine</h1>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                Quantum Sync Active
+            </div>
+        </div>
+
+        <!-- Chat Stream Area -->
+        <div id="chat-stream" class="chat-stream">
+            <div class="message-box ai">
+                SAGE Core Active: Neural grid online. Ready for query execution.
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-footer">
+            <input type="text" id="user-input" class="query-input" placeholder="Query SAHYA core or request generation..." autocomplete="off">
+            <button id="send-btn" class="send-btn">Send</button>
+        </div>
+    </div>
+
+    <!-- Frontend Script for Startup Sequence & Mode Switching -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const statusText = document.getElementById("boot-status");
+            const progressBar = document.getElementById("boot-progress");
+            const percentText = document.getElementById("boot-percent");
+            const startupScreen = document.getElementById("startup-screen");
+
+            const bootSteps = [
+                { percent: 20, text: "Samith Architecture Hyper Yield Automation AI" },
+                { percent: 50, text: "[GRID] Establishing Secure Quantum Core Connection..." },
+                { percent: 80, text: "[MATRIX] Calibrating Neural Response Parameters..." },
+                { percent: 100, text: "[READY] All Systems Operational." }
+            ];
+
+            let currentProgress = 0;
+            let stepIndex = 0;
+
+            const interval = setInterval(() => {
+                currentProgress += 3;
+                if (currentProgress > 100) currentProgress = 100;
+
+                progressBar.style.width = currentProgress + "%";
+                percentText.innerText = currentProgress + "%";
+
+                if (stepIndex < bootSteps.length && currentProgress >= bootSteps[stepIndex].percent) {
+                    statusText.innerText = bootSteps[stepIndex].text;
+                    stepIndex++;
+                }
+
+                if (currentProgress === 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        startupScreen.classList.add("fade-out");
+                    }, 500);
+                }
+            }, 35);
+
+            // Mode Switching Logic
+            let currentMode = "universal";
+            const modeButtons = document.querySelectorAll('.sidebar .nav-btn[data-mode]');
+
+            modeButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    modeButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentMode = btn.getAttribute('data-mode');
+                    
+                    // Update input placeholder based on mode
+                    const inputField = document.getElementById("user-input");
+                    if (currentMode === 'impress') {
+                        inputField.placeholder = "Enter topic for high-tech architectural breakdown...";
+                    } else if (currentMode === 'image') {
+                        inputField.placeholder = "Describe visual generation parameters...";
+                    } else {
+                        inputField.placeholder = "Query SAHYA core or request generation...";
+                    }
+                });
+            });
+
+            // Chat Handling Logic
+            const chatStream = document.getElementById("chat-stream");
+            const userInput = document.getElementById("user-input");
+            const sendBtn = document.getElementById("send-btn");
+
+            async function handleSendMessage() {
+                const messageText = userInput.value.trim();
+                if (!messageText) return;
+
+                const userBox = document.createElement("div");
+                userBox.className = "message-box user";
+                userBox.innerText = messageText;
+                chatStream.appendChild(userBox);
+
+                userInput.value = "";
+                chatStream.scrollTop = chatStream.scrollHeight;
+
+                const aiBox = document.createElement("div");
+                aiBox.className = "message-box ai";
+                aiBox.innerText = "Processing query across neural grid...";
+                chatStream.appendChild(aiBox);
+                chatStream.scrollTop = chatStream.scrollHeight;
+
+                try {
+                    const response = await fetch("/chat", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ message: messageText, mode: currentMode })
+                    });
+                    const data = await response.json();
+                    aiBox.innerText = data.response || data.reply || "Core response generated.";
+                } catch (err) {
+                    aiBox.innerText = "⚠ SAHYA Core Link Error. Please retry.";
+                }
+                chatStream.scrollTop = chatStream.scrollHeight;
+            }
+
+            sendBtn.addEventListener("click", handleSendMessage);
+            userInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") handleSendMessage();
+            });
+        });
+    </script>
+</body>
+</html>
